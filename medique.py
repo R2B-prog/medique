@@ -17,12 +17,7 @@ space_xs, space_sm, space_md, space_lg, space_xl, space_2xl = 4, 8, 12, 16, 24, 
 sidebar_width, content_padding = 240, 24
 
 #----------------------------------------------------------------------------------#
-medique = Tk()
-medique.title("Medique!")
-medique.geometry("660x489")
-#medique.resizable(False,
 
-# Should we make the program resizable?
 
 
 # creates the asterisk logo
@@ -42,8 +37,8 @@ def logo(parent, size, bg):
 #For creating a label for the wordmark/logotype (needed since the exclamation mark is red)
 def wordmark(parent, font_size):
     wordframe = Frame(parent)
-    Label(wordframe, text="Medique", font=(font_heading, font_size), bg=primary, fg=text).pack(side="left")
-    Label(wordframe, text="!", font=(font_heading, font_size), bg=primary, fg=accent).pack(side="left")
+    Label(wordframe, text="Medique", font=(font_heading, font_size), bg=primary, fg=text).pack(side="left",padx=0)
+    Label(wordframe, text="!", font=(font_heading, font_size), bg=primary, fg=accent).pack(side="left",padx=0)
     return wordframe
     
 #Creates rounded rectangles, can be used to create buttons by inputting command=function_name (ex: command=test) when calling this class, text can also be placed inside it using txt=""
@@ -79,7 +74,9 @@ class RoundedSurface(Canvas):
             self.command = command
             self.bind("<ButtonPress-1>", self._on_press)
             self.bind("<ButtonRelease-1>", self._on_release)
+            self.config(cursor="hand2")
             if txt != None:
+                label.config(cursor="hand2")
                 label.bind("<ButtonPress-1>", self._on_press)
                 label.bind("<ButtonRelease-1>", self._on_release)
 
@@ -91,28 +88,58 @@ class RoundedSurface(Canvas):
         if self.command is not None:
             self.command()
 
+#Creates the header
+class header(Frame):
+    def __init__(self, parent):
+        Frame.__init__(self, parent, bg=primary, width=660, height=78)
+        self.pack_propagate(False)
+        logo(self, 64, primary).pack(side="left",padx=12)
+        wordmark(self, logo_size).pack(side="left")
 
-def test():
-    print("Hello")
-
-#----------------------------------------------------------------------------------#
+#-------------------------- Pages --------------------------#
 # Welcome Page
-class landing():
-    def __init__(self):
-        landing_frame = Frame(medique, bg=primary)
-        landing_frame.place(relheight=1,relwidth=1)
-        centered_frame = Frame(landing_frame, bg=primary)
-        centered_frame.place(relx=0.5,rely=0.5,anchor="center")
+class landing(Frame):
+    def __init__(self, medique):
+        super().__init__(medique.container, bg=primary)
+        centered_frame = Frame(self, bg=primary)
+        centered_frame.place(relx=0.5,rely=0.46,anchor="center")
 
-# BTW for these ones, should we use pack or place? 
-# IF we use pack, the space between them will stay the same when resizing the window 
-# IF we use place, we can have them closer to each other, but the spaces between them changes when resizing the window.
-        logo(centered_frame, 48, primary).pack()
+        logo(self, heading_size, primary).place(relx=0.493,rely=0.375,anchor="center")
         wordmark(centered_frame, 64).pack()
-        get_started = RoundedSurface(centered_frame, 150, 30, 10, 2, secondary, primary, command=test, txt="Get Started!")
-        get_started.pack()
+        get_started = RoundedSurface(self, 150, 30, radius_button, 2, secondary, primary, command=lambda: medique.page("dashboard"), txt="Get Started!")
+        get_started.place(relx=0.5,rely=0.57,anchor="center")
 
-#Starts the welcome page
-landing()
 
-medique.mainloop()
+class main_dashboard(Frame):
+    def __init__(self, medique):
+        super().__init__(medique.container, bg=light_blue)
+        header(self).pack()
+
+
+#-------------------------- Medique --------------------------#
+class Medique(Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Medique!")
+        self.geometry("660x489")
+        self.resizable(False,False)
+        self.container = Frame(self, bg=background)
+        self.container.pack(fill="both", expand=True)
+        
+        self.screens = {"landing": landing(self), "dashboard": main_dashboard(self)}
+        for s in self.screens.values():
+            s.place(relwidth=1, relheight=1)
+        self.page("landing")
+
+    def page(self, name):
+        s = self.screens[name]
+        if hasattr(s, "refresh"):
+            s.refresh()
+        s.tkraise()
+
+
+
+# Should we make the program resizable?
+
+if __name__ == "__main__":
+    Medique().mainloop()
