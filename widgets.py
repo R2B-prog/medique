@@ -16,16 +16,18 @@ def logo(parent, size, bg):
                       fill=accent, width=w, capstyle="butt")
     return c
 
+
 #For creating a label for the wordmark/logotype (needed since the exclamation mark is red)
 def wordmark(parent, font_size):
     wordframe = Frame(parent)
     Label(wordframe, text="Medique", font=(font_heading, font_size), bg=primary, fg=text).pack(side="left",padx=0)
     Label(wordframe, text="!", font=(font_heading, font_size), bg=primary, fg=accent).pack(side="left",padx=0)
     return wordframe
-    
+
+
 #Creates rounded rectangles, can be used to create buttons by inputting command=function_name (ex: command=test) when calling this class, text can also be placed inside it using txt=""
 class RoundedSurface(Canvas):
-    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None):
+    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, hover=None):
         Canvas.__init__(self, parent, borderwidth=0, relief="flat", highlightthickness=0, bg=bg)
 
         rad = 2*cornerradius
@@ -52,16 +54,37 @@ class RoundedSurface(Canvas):
             label = Label(self, text=txt, font=(font_heading, label_size), bg=color, fg=text)
             label.place(relx=0.5,rely=0.5, anchor="center")
 
+        def recolor(new_color):
+            for item in self.find_all():
+                self.itemconfig(item,fill=new_color)
+            if txt != None:
+                label.config(bg=new_color)
+
+        def on_enter(event):
+            recolor(hover)
+                
+        def on_leave(event):
+            recolor(color)
+
         if command != None:
+            if hover == None:
+                hover = color
+            
             self.command = command
             self.bind("<ButtonPress-1>", self._on_press)
             self.bind("<ButtonRelease-1>", self._on_release)
+            self.bind("<Enter>", on_enter)
+            self.bind("<Leave>", on_leave)
             self.config(cursor="hand2")
             if txt != None:
                 label.config(cursor="hand2")
                 label.bind("<ButtonPress-1>", self._on_press)
                 label.bind("<ButtonRelease-1>", self._on_release)
+                label.bind("<Enter>", on_enter)
+                label.bind("<Leave>", on_leave)
 
+        
+        
     def _on_press(self, event):
         self.configure(relief="sunken")
 

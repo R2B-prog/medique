@@ -4,7 +4,6 @@ from settings import *
 from screens.landing import landing
 from screens.dashboard import main_dashboard
 
-
 #-------------------------- Medique --------------------------#
 class Medique(Tk):
     def __init__(self):
@@ -25,7 +24,6 @@ class Medique(Tk):
         if hasattr(s, "refresh"):
             s.refresh()
         s.tkraise()
-
 
 
 # Should we make the program resizable?
