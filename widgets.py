@@ -32,7 +32,7 @@ def wordmark(parent, font_size, spacing=0):
     
 #Creates rounded rectangles, can be used to create buttons by inputting command=function_name (ex: command=test) when calling this class, text can also be placed inside it using txt=""
 class RoundedSurface(Canvas):
-    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, outline=None):
+    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, outline=None, hover=None):
         Canvas.__init__(self, parent, borderwidth=0, relief="flat", highlightthickness=0, bg=bg)
 
         if 2*cornerradius > width:
@@ -42,35 +42,48 @@ class RoundedSurface(Canvas):
             print("Error: cornerradius is greater than height.")
             return None
 
-        def shape(pad, cr, fill):
+        def shape(pad, cr, fill, tag=""):
             rad = 2*cr
-            self.create_polygon((pad,height-cr-pad,pad,cr+pad,pad+cr,pad,width-pad-cr,pad,width-pad,cr+pad,width-pad,height-cr-pad,width-pad-cr,height-pad,pad+cr,height-pad), fill=fill, outline=fill)
-            self.create_arc((pad,pad+rad,pad+rad,pad), start=90, extent=90, fill=fill, outline=fill)
-            self.create_arc((width-pad-rad,pad,width-pad,pad+rad), start=0, extent=90, fill=fill, outline=fill)
-            self.create_arc((width-pad,height-rad-pad,width-pad-rad,height-pad), start=270, extent=90, fill=fill, outline=fill)
-            self.create_arc((pad,height-pad-rad,pad+rad,height-pad), start=180, extent=90, fill=fill, outline=fill)
+            self.create_polygon((pad,height-cr-pad,pad,cr+pad,pad+cr,pad,width-pad-cr,pad,width-pad,cr+pad,width-pad,height-cr-pad,width-pad-cr,height-pad,pad+cr,height-pad), fill=fill, outline=fill, tags=tag)
+            self.create_arc((pad,pad+rad,pad+rad,pad), start=90, extent=90, fill=fill, outline=fill, tags=tag)
+            self.create_arc((width-pad-rad,pad,width-pad,pad+rad), start=0, extent=90, fill=fill, outline=fill, tags=tag)
+            self.create_arc((width-pad,height-rad-pad,width-pad-rad,height-pad), start=270, extent=90, fill=fill, outline=fill, tags=tag)
+            self.create_arc((pad,height-pad-rad,pad+rad,height-pad), start=180, extent=90, fill=fill, outline=fill, tags=tag)
 
         if outline != None:
-            shape(padding, cornerradius, outline)                 # outer layer = the outline
-            shape(padding+1, max(cornerradius-1, 1), color)       # inner layer = the fill
+            shape(padding, cornerradius, outline)                       # outer layer = the outline
+            shape(padding+1, max(cornerradius-1, 1), color, "body")     # inner layer = the fill
         else:
-            shape(padding, cornerradius, color)
+            shape(padding, cornerradius, color, "body")
 
         (x0,y0,x1,y1)  = self.bbox("all")
         width = (x1-x0)
         height = (y1-y0)
         self.configure(width=width, height=height)
 
+        label = None
         if txt != None:
             label = Label(self, text=txt, font=(font_heading, label_size), bg=color, fg=text)
             label.place(relx=0.5,rely=0.5, anchor="center")
+
+        # hover = the color the button changes to when the mouse is on it
+        if hover != None:
+            def set_color(c):
+                self.itemconfig("body", fill=c, outline=c)
+                if label != None:
+                    label.config(bg=c)
+            self.bind("<Enter>", lambda e: set_color(hover))
+            self.bind("<Leave>", lambda e: set_color(color))
+            if label != None:
+                label.bind("<Enter>", lambda e: set_color(hover))
+                label.bind("<Leave>", lambda e: set_color(color))
 
         if command != None:
             self.command = command
             self.bind("<ButtonPress-1>", self._on_press)
             self.bind("<ButtonRelease-1>", self._on_release)
             self.config(cursor="hand2")
-            if txt != None:
+            if label != None:
                 label.config(cursor="hand2")
                 label.bind("<ButtonPress-1>", self._on_press)
                 label.bind("<ButtonRelease-1>", self._on_release)
