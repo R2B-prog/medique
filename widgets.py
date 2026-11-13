@@ -32,7 +32,7 @@ def wordmark(parent, font_size, spacing=0):
     
 #Creates rounded rectangles, can be used to create buttons by inputting command=function_name (ex: command=test) when calling this class, text can also be placed inside it using txt=""
 class RoundedSurface(Canvas):
-    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, outline=None, hover=None):
+    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, outline=None, hover=None, fg=None, font=None):
         Canvas.__init__(self, parent, borderwidth=0, relief="flat", highlightthickness=0, bg=bg)
 
         if 2*cornerradius > width:
@@ -52,7 +52,7 @@ class RoundedSurface(Canvas):
 
         if outline != None:
             shape(padding, cornerradius, outline)                       # outer layer = the outline
-            shape(padding+1, max(cornerradius-1, 1), color, "body")     # inner layer = the fill
+            shape(padding+1, max(cornerradius-1, 1), color, "body")     # inner layer = the fill (+1 = thickness of the outline)
         else:
             shape(padding, cornerradius, color, "body")
 
@@ -61,32 +61,20 @@ class RoundedSurface(Canvas):
         height = (y1-y0)
         self.configure(width=width, height=height)
 
-        label = None
+        # the text is drawn right on the button (no Label, so no background box behind it)
         if txt != None:
-            label = Label(self, text=txt, font=(font_heading, label_size), bg=color, fg=text)
-            label.place(relx=0.5,rely=0.5, anchor="center")
+            self.create_text(width/2, height/2, text=txt, font=font or (font_heading, label_size), fill=fg or text)
 
         # hover = the color the button changes to when the mouse is on it
         if hover != None:
-            def set_color(c):
-                self.itemconfig("body", fill=c, outline=c)
-                if label != None:
-                    label.config(bg=c)
-            self.bind("<Enter>", lambda e: set_color(hover))
-            self.bind("<Leave>", lambda e: set_color(color))
-            if label != None:
-                label.bind("<Enter>", lambda e: set_color(hover))
-                label.bind("<Leave>", lambda e: set_color(color))
+            self.bind("<Enter>", lambda e: self.itemconfig("body", fill=hover, outline=hover))
+            self.bind("<Leave>", lambda e: self.itemconfig("body", fill=color, outline=color))
 
         if command != None:
             self.command = command
             self.bind("<ButtonPress-1>", self._on_press)
             self.bind("<ButtonRelease-1>", self._on_release)
             self.config(cursor="hand2")
-            if label != None:
-                label.config(cursor="hand2")
-                label.bind("<ButtonPress-1>", self._on_press)
-                label.bind("<ButtonRelease-1>", self._on_release)
 
     def _on_press(self, event):
         self.configure(relief="sunken")
