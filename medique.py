@@ -10,8 +10,8 @@ class Medique(Tk):
     def __init__(self):
         super().__init__()
         self.title("Medique!")
-        self.geometry("660x489")
-        self.resizable(False,False)
+        self.geometry("1440x967")
+        self.resizable(False, False)
         self.container = Frame(self, bg=background)
         self.container.pack(fill="both", expand=True)
         
@@ -27,8 +27,6 @@ class Medique(Tk):
         s.tkraise()
 
 
-
-# Should we make the program resizable?
 
 if __name__ == "__main__":
     Medique().mainloop()

@@ -17,32 +17,45 @@ def logo(parent, size, bg):
     return c
 
 #For creating a label for the wordmark/logotype (needed since the exclamation mark is red)
-def wordmark(parent, font_size):
-    wordframe = Frame(parent)
-    Label(wordframe, text="Medique", font=(font_heading, font_size), bg=primary, fg=text).pack(side="left",padx=0)
-    Label(wordframe, text="!", font=(font_heading, font_size), bg=primary, fg=accent).pack(side="left",padx=0)
-    return wordframe
+from tkinter import font as tkfont
+
+def wordmark(parent, font_size, spacing=0):
+    f = tkfont.Font(family=font_heading, size=font_size)
+    letters = [(ch, text) for ch in "Medique"] + [("!", accent)]
+    total = sum(f.measure(ch) for ch, _ in letters) + spacing * (len(letters) - 1)
+    c = Canvas(parent, width=total, height=f.metrics("linespace"), bg=primary, highlightthickness=0)
+    x = 0
+    for ch, color in letters:
+        c.create_text(x, 0, text=ch, font=f, fill=color, anchor="nw")
+        x += f.measure(ch) + spacing
+    return c
     
 #Creates rounded rectangles, can be used to create buttons by inputting command=function_name (ex: command=test) when calling this class, text can also be placed inside it using txt=""
 class RoundedSurface(Canvas):
-    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None):
+    def __init__(self, parent, width, height, cornerradius, padding, color, bg, command=None, txt=None, outline=None):
         Canvas.__init__(self, parent, borderwidth=0, relief="flat", highlightthickness=0, bg=bg)
 
-        rad = 2*cornerradius
-        if rad > width:
+        if 2*cornerradius > width:
             print("Error: cornerradius is greater than width.")
             return None
-        if rad > height:
+        if 2*cornerradius > height:
             print("Error: cornerradius is greater than height.")
             return None
-        def shape():
-            self.create_polygon((padding,height-cornerradius-padding,padding,cornerradius+padding,padding+cornerradius,padding,width-padding-cornerradius,padding,width-padding,cornerradius+padding,width-padding,height-cornerradius-padding,width-padding-cornerradius,height-padding,padding+cornerradius,height-padding), fill=color, outline=color)
-            self.create_arc((padding,padding+rad,padding+rad,padding), start=90, extent=90, fill=color, outline=color)
-            self.create_arc((width-padding-rad,padding,width-padding,padding+rad), start=0, extent=90, fill=color, outline=color)
-            self.create_arc((width-padding,height-rad-padding,width-padding-rad,height-padding), start=270, extent=90, fill=color, outline=color)
-            self.create_arc((padding,height-padding-rad,padding+rad,height-padding), start=180, extent=90, fill=color, outline=color)
 
-        id = shape()
+        def shape(pad, cr, fill):
+            rad = 2*cr
+            self.create_polygon((pad,height-cr-pad,pad,cr+pad,pad+cr,pad,width-pad-cr,pad,width-pad,cr+pad,width-pad,height-cr-pad,width-pad-cr,height-pad,pad+cr,height-pad), fill=fill, outline=fill)
+            self.create_arc((pad,pad+rad,pad+rad,pad), start=90, extent=90, fill=fill, outline=fill)
+            self.create_arc((width-pad-rad,pad,width-pad,pad+rad), start=0, extent=90, fill=fill, outline=fill)
+            self.create_arc((width-pad,height-rad-pad,width-pad-rad,height-pad), start=270, extent=90, fill=fill, outline=fill)
+            self.create_arc((pad,height-pad-rad,pad+rad,height-pad), start=180, extent=90, fill=fill, outline=fill)
+
+        if outline != None:
+            shape(padding, cornerradius, outline)                 # outer layer = the outline
+            shape(padding+1, max(cornerradius-1, 1), color)       # inner layer = the fill
+        else:
+            shape(padding, cornerradius, color)
+
         (x0,y0,x1,y1)  = self.bbox("all")
         width = (x1-x0)
         height = (y1-y0)
