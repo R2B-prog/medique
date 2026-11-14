@@ -14,12 +14,18 @@ columns = (("QUEUING NO", 14), ("PATIENT ID", 20), ("PATIENT NAME", 42), ("AGE",
 # ---------- the table (blue header that stays on top + rows that scroll) ----------
 # max_rows       = how many rows are visible at once (None = fill all the space available)
 # show_scrollbar = True shows the scroll bar, False hides it (you can still scroll with the mouse wheel)
+# fill_blank     = True adds empty rows (with the lines) so the table always looks full, like the design
+#                  (used by the full queuing list screen)
 # header text size: font_heading, 18      row text size: font_body, 12      row height: pady=6
 class QueueTable(Frame):
-    def __init__(self, parent, max_rows=None, show_scrollbar=True):
+    def __init__(self, parent, max_rows=None, show_scrollbar=True, fill_blank=False):
         super().__init__(parent, bg=border)
         self.max_rows = max_rows
+        self.fill_blank = fill_blank
         self.row_widgets = []
+        self.data = []          # the patients currently shown (so we can redraw when the size changes)
+        self.blank_count = 0    # how many empty rows are drawn at the bottom
+        self.row_h = None       # height of one row (measured once)
 
         # ---- header (stays on top) ----
         head = Frame(self, bg=border)
@@ -51,7 +57,7 @@ class QueueTable(Frame):
             Frame(head, width=bar.winfo_reqwidth(), bg=border).pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self.window, width=e.width))
+        self.canvas.bind("<Configure>", self._on_canvas)
         self.rows.bind("<Configure>", self._on_rows)
 
         # mouse wheel scrolling (only when the mouse is on the table)
@@ -79,37 +85,70 @@ class QueueTable(Frame):
         except TclError:
             pass
 
+    def _on_canvas(self, event):
+        self.canvas.itemconfigure(self.window, width=event.width)
+        # the table got taller or shorter -> add / remove the empty rows if needed
+        if self.fill_blank and self._blank_needed() != self.blank_count:
+            self.draw()
+
+    # height of one row (we make a temporary label with the same settings as the real cells and measure it)
+    def _row_height(self):
+        if self.row_h is None:
+            temp = Label(self.rows, text="X", font=(font_body, 12), pady=6)
+            self.row_h = temp.winfo_reqheight() + 1     # +1 = the line between the rows
+            temp.destroy()
+        return self.row_h
+
+    # how many empty rows fit in the space left under the patients
+    def _blank_needed(self):
+        if not self.fill_blank:
+            return 0
+        used = max(len(self.data), 1)
+        return max(0, self.canvas.winfo_height() // self._row_height() - used)
+
     # rows = list of (queuing no, patient id, name, age, priority)
     def set_rows(self, rows):
+        self.data = list(rows)
+        self.draw()
+
+    # draws the rows (patients first, then the empty rows)
+    def draw(self):
         for w in self.row_widgets:
             w.destroy()
         self.row_widgets = []
-        if not rows:
+        if not self.data:
             empty = Label(self.rows, text="No patients in the queue.", font=(font_body, 12), bg=cell_bg, fg=dark, pady=10)
             empty.grid(row=0, column=0, columnspan=len(columns), sticky="nsew", pady=(1, 0))
             self.row_widgets.append(empty)
-            return
-        for r, row in enumerate(rows):
+        for r, row in enumerate(self.data):
             for col, value in enumerate(row):
                 cell = Label(self.rows, text=value, font=(font_body, 12), bg=cell_bg, fg=dark, pady=6)
                 cell.grid(row=r, column=col, sticky="nsew", padx=(0 if col == 0 else 1, 0), pady=(1, 0))
                 self.row_widgets.append(cell)
 
+        # empty rows at the bottom (text=" " so they keep the same height as the real rows)
+        self.blank_count = self._blank_needed()
+        first = max(len(self.data), 1)
+        for r in range(first, first + self.blank_count):
+            for col in range(len(columns)):
+                cell = Label(self.rows, text=" ", font=(font_body, 12), bg=cell_bg, fg=dark, pady=6)
+                cell.grid(row=r, column=col, sticky="nsew", padx=(0 if col == 0 else 1, 0), pady=(1, 0))
+                self.row_widgets.append(cell)
+
 
 class queue_card(RoundedBox):
-    def __init__(self, parent, queue):
+    # on_view_full = function that opens the full queuing list screen (given by the dashboard)
+    def __init__(self, parent, queue, on_view_full=None):
         # radius = roundness of the card, pad = space between the card edge and its content
         super().__init__(parent, card_bg, light_blue, radius=14, outline=card_outline, pad=6)   # <-- ADJUST radius
         self.queue = queue
-        self.full_window = None
-        self.full_table = None
         body = self.body
 
         # ---- title + View Full List button ----
         top = Frame(body, bg=card_bg)
         top.pack(fill="x", padx=18, pady=(14, 8))
         card_title(top, "QUEUING LIST").pack(side="left")
-        card_button(top, "View Full List", 150, self.view_full).pack(side="right")   # 150 = width of the button
+        card_button(top, "View Full List", 150, on_view_full).pack(side="right")   # 150 = width of the button
 
         # ---- table: shows rows_shown patients, scroll with the mouse wheel (scroll bar hidden) ----
         self.table = QueueTable(body, max_rows=rows_shown, show_scrollbar=False)
@@ -128,19 +167,3 @@ class queue_card(RoundedBox):
         total = len(self.queue)
         self.more.config(text=("Showing " + str(rows_shown) + " of " + str(total) + " patients. Scroll to see the rest.")
                          if total > rows_shown else "")
-        if self.full_table is not None and self.full_window.winfo_exists():
-            self.full_table.set_rows(self.queue.rows())
-
-    # ---------- VIEW FULL LIST: opens a window with everyone in the queue (scroll with the mouse wheel) ----------
-    def view_full(self):
-        if self.full_window is not None and self.full_window.winfo_exists():
-            self.full_window.lift()
-            return
-        win = Toplevel(self)
-        win.title("Full queuing list")
-        win.geometry("900x500")          # <-- ADJUST size of the window
-        win.configure(bg=light_blue)
-        table = QueueTable(win, max_rows=None, show_scrollbar=False)   # False = no scroll bar (mouse wheel still scrolls)
-        table.pack(fill="both", expand=True, padx=16, pady=16)
-        table.set_rows(self.queue.rows())
-        self.full_window, self.full_table = win, table

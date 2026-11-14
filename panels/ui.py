@@ -61,6 +61,18 @@ class RoundedBox(Canvas):
         self.tag_lower("bg")
 
 
+# ---------- FillBox: same as RoundedBox, but it STRETCHES to fill all the space it is given ----------
+# (RoundedBox follows the height of its content, FillBox makes its content follow the box instead.)
+# Use pack(fill="both", expand=True) on it. Used by the full queuing list screen.
+class FillBox(RoundedBox):
+    def _on_body(self, event):
+        pass   # do not follow the height of the content
+
+    def _on_canvas(self, event):
+        RoundedBox._on_canvas(self, event)
+        self.itemconfigure(self.win, height=max(1, event.height - 2 * self.pad))
+
+
 # small label above the inputs (PATIENT NAME:, AGE: ...)   <-- ADJUST the size: font_body, 12
 def card_label(parent, txt):
     return Label(parent, text=txt, font=(font_body, 12), bg=card_bg, fg=dark)
@@ -90,19 +102,20 @@ def set_text(entry, value):
 
 # rounded button with dark text, used by ALL the buttons in the cards
 # width = given when you call it, 36 = height of the button, radius_button = roundness (from settings.py)
-def card_button(parent, txt, width, command):
+# bg = color behind the button (use light_blue when the button sits on the page, not inside a card)
+def card_button(parent, txt, width, command, bg=card_bg):
     font = (font_heading, 16)   # <-- ADJUST 16 = text size inside the buttons
     try:
         # newest RoundedSurface: the text is drawn directly on the button (no background box behind it)
-        return RoundedSurface(parent, width, 36, radius_button, 2, button_fill, card_bg, command=command, txt=txt,
+        return RoundedSurface(parent, width, 36, radius_button, 2, button_fill, bg, command=command, txt=txt,
                               outline=button_outline, fg=dark, font=font)   # <-- ADJUST 36 = button height
     except TypeError:
         pass
     try:
         # RoundedSurface that only has the outline option
-        b = RoundedSurface(parent, width, 36, radius_button, 2, button_fill, card_bg, command=command, txt=txt, outline=button_outline)
+        b = RoundedSurface(parent, width, 36, radius_button, 2, button_fill, bg, command=command, txt=txt, outline=button_outline)
     except TypeError:
-        b = RoundedSurface(parent, width, 36, radius_button, 2, button_fill, card_bg, command=command, txt=txt)
+        b = RoundedSurface(parent, width, 36, radius_button, 2, button_fill, bg, command=command, txt=txt)
     for child in b.winfo_children():
         child.config(fg=dark, font=font)
     return b

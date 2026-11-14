@@ -5,7 +5,6 @@ from panels.register import register_card
 from panels.next_patient import next_patient_card
 from panels.queue_list import queue_card, QueueTable
 from panels.ui import shadow
-from patients import PatientQueue
 from settings import *
 
 # Max width of the dashboard panel. When the window is wider than this
@@ -38,10 +37,10 @@ class main_dashboard(Frame):
         self.bind_all("<Button-5>", self._wheel, add="+")
 
         # the three cards     pady=(space above, space below) = space between the cards,  padx = space on the left and right
-        self.queue = PatientQueue()    # the list of patients, shared by the three cards
+        self.queue = medique.queue     # the list of patients, shared by the three cards (and the full list screen)
         register_card(content, self.queue).pack(fill="x", padx=16, pady=(16, 0))
         next_patient_card(content, self.queue).pack(fill="x", padx=16, pady=(12, 0))
-        queue_card(content, self.queue).pack(fill="x", padx=16, pady=(12, 16))
+        queue_card(content, self.queue, lambda: medique.page("full_list")).pack(fill="x", padx=16, pady=(12, 16))
 
         self.bind("<Configure>", self._resize)
 
