@@ -6,7 +6,6 @@ from screens.dashboard import main_dashboard
 from screens.full_list import full_list
 from patients import PatientQueue
 
-
 #-------------------------- Medique --------------------------#
 class Medique(Tk):
     def __init__(self):

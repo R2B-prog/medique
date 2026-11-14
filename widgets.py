@@ -16,6 +16,7 @@ def logo(parent, size, bg):
                       fill=accent, width=w, capstyle="butt")
     return c
 
+
 #For creating a label for the wordmark/logotype (needed since the exclamation mark is red)
 from tkinter import font as tkfont
 
@@ -70,12 +71,18 @@ class RoundedSurface(Canvas):
             self.bind("<Enter>", lambda e: self.itemconfig("body", fill=hover, outline=hover))
             self.bind("<Leave>", lambda e: self.itemconfig("body", fill=color, outline=color))
 
+    
         if command != None:
+            if hover == None:
+                hover = color
+            
             self.command = command
             self.bind("<ButtonPress-1>", self._on_press)
             self.bind("<ButtonRelease-1>", self._on_release)
             self.config(cursor="hand2")
 
+        
+        
     def _on_press(self, event):
         self.configure(relief="sunken")
 
