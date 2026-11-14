@@ -141,7 +141,7 @@ class register_card(RoundedBox):
         if error:
             self.message.config(text=error, fg=error_color)
             return
-        patient = self.queue.add(self.value(self.name_entry).strip(), self.value(self.age_entry).strip(), self.priority.get(),
+        patient = self.queue.enqueue(self.value(self.name_entry).strip(), self.value(self.age_entry).strip(), self.priority.get(),
                                  self.value(self.condition_entry).strip())
         self.clear()
         self.message.config(text="Registered " + patient["name"] + " (" + patient["id"] + ")", fg=ok_color)

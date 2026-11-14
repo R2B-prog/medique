@@ -51,7 +51,7 @@ class next_patient_card(RoundedBox):
 
     # ---------- fills the boxes with the first patient in the queue (dashes if the queue is empty) ----------
     def refresh(self):
-        patient = self.queue.next()
+        patient = self.queue.peek()
         if patient is None:
             values = ("-",) * 5
         else:
@@ -65,22 +65,22 @@ class next_patient_card(RoundedBox):
 
     # ---------- CANCEL = the patient left / did not show up, remove them from the queue ----------
     def cancel(self):
-        patient = self.queue.next()
+        patient = self.queue.peek()
         if patient is None:
             self.show("There is no patient to cancel.", ok=False)
             return
         if confirm_cancel and not messagebox.askyesno("Cancel patient", "Remove " + patient["name"] + " from the queue?"):
             return
-        self.queue.remove(patient)
+        self.queue.dequeue(patient)
         self.show(patient["name"] + " was removed from the queue.")
 
     # ---------- COMPLETE CONSULTATION = done with this patient, the next one comes up ----------
     def complete(self):
-        patient = self.queue.next()
+        patient = self.queue.peek()
         if patient is None:
             self.show("There is no patient to attend.", ok=False)
             return
         if confirm_complete and not messagebox.askyesno("Complete consultation", "Complete the consultation of " + patient["name"] + "?"):
             return
-        self.queue.remove(patient)
+        self.queue.dequeue(patient)
         self.show("Consultation of " + patient["name"] + " completed.")

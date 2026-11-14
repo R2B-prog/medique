@@ -13,6 +13,3 @@ space_xs, space_sm, space_md, space_lg, space_xl, space_2xl = 4, 8, 12, 16, 24, 
 
 #Layout
 sidebar_width, content_padding = 240, 24
-
-def add(num1,num2):
-    return num1+num2

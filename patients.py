@@ -20,7 +20,7 @@ class PatientQueue:
         for function in self.listeners:
             function()
 
-    def add(self, name, age, priority, condition=""):
+    def enqueue(self, name, age, priority, condition=""):
         self.counters[priority] += 1
         self.ticket += 1
         patient = {"id": "%s-%04d" % (PREFIX[priority], self.counters[priority]),
@@ -32,19 +32,24 @@ class PatientQueue:
         self._notify()
         return patient
 
-    def next(self):
+    def dequeue(self, patient):
+        self.patients.pop(0)
+        self._notify()
+
+    def peek(self):
         return self.patients[0] if self.patients else None
 
-    def remove(self, patient):
-        if patient in self.patients:
-            self.patients.remove(patient)
-            self._notify()
+    def isEmpty(self):
+        return len(self.patients) == 0
 
-    def has(self, name, age):
-        return any(p["name"].lower() == name.lower() and p["age"] == age for p in self.patients)
+    def size(self):
+        return len(self.patients)
 
     def __len__(self):
         return len(self.patients)
+    
+    def has(self, name, age):
+        return any(p["name"].lower() == name.lower() and p["age"] == age for p in self.patients)
 
     # rows for the table: (queuing no, patient id, name, age, priority)
     def rows(self, limit=None):
