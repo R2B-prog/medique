@@ -24,6 +24,9 @@ class full_list(Frame):
         top.pack(fill="x", padx=16, pady=(12, 8))
         card_button(top, "GO BACK", 110, lambda: medique.page("dashboard"), bg=light_blue).pack(side="left")   # 110 = width of the button
 
+        # ---- GO to Archive List button ----
+        card_button(top, "View Archives", 150, lambda: medique.page("archive_list"), bg=light_blue).pack(side="right")   # 110 = width of the button
+
         # ---- card with the title + the table (the card fills all the space left in the window) ----
         card = FillBox(self, card_bg, light_blue, radius=14, outline=card_outline, pad=6)
         card.pack(fill="both", expand=True, padx=16, pady=(0, 16))

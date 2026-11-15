@@ -12,14 +12,13 @@ class PatientQueue:
         self.counters = {p: 0 for p in PRIORITIES}
         self.ticket = 0
         self.listeners = []
+        self.archive = []
 
         try:
             with open("data/patient_list.json", "r", encoding="utf-8") as patient_list:
                 data = json.load(patient_list)
-        except FileNotFoundError:
-            self.savefile()
-        except json.JSONDecodeError:
-            self.savefile()
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+                print("Could not read file")
         else:
             if len(data) != 3:
                 self.savefile()
@@ -29,12 +28,19 @@ class PatientQueue:
                 self.patients = data[2]
         self.subscribe(self.savefile)
 
+        try:
+            with open("data/patient_archive.json", "r", encoding="utf-8") as patient_archive:
+                data2 = json.load(patient_archive)
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            print("Could not read file")
+        else:
+            self.archive = data2
+
     # the cards call subscribe(function) so they refresh when the queue changes
     def subscribe(self, function):
         self.listeners.append(function)
 
     def _notify(self):
-        print(self.counters)
         for function in self.listeners:
             function()
         
@@ -51,7 +57,8 @@ class PatientQueue:
         self._notify()
         return patient
 
-    def dequeue(self, patient):
+    def dequeue(self):
+        self.archive_patient()
         self.patients.pop(0)
         self._notify()
 
@@ -76,6 +83,27 @@ class PatientQueue:
         return [(str(i + 1), p["id"], p["name"], p["age"] or "-", p["priority"].capitalize())
                 for i, p in enumerate(patients)]
 
+    # rows for the table: (queuing no, patient id, name, age, priority, consulted)
+    def archive_rows(self, limit=None):
+        patients = self.archive if limit is None else self.archive[:limit]
+        return [(str(i + 1), p["id"], p["name"], p["age"] or "-", p["priority"].capitalize(), p["consulted"])
+                for i, p in enumerate(patients)]
+
+    # saves current queue of patients into patient_list.json file in the data folder
     def savefile(self):
-        with open("data/patient_list.json", "w") as final:
-            json.dump([self.ticket,self.counters,self.patients], final)
+        try:
+            with open("data/patient_list.json", "w") as final:
+                json.dump([self.ticket,self.counters,self.patients], final)
+        except OSError as e:
+            print("Could not save records:", e)
+
+    # archives the patient that'll be removed from the queue
+    def archive_patient(self):
+        self.archive.append(self.peek())
+
+        # saves current archive list into patient_archive.json file in the data folder
+        try:
+            with open("data/patient_archive.json", "w") as final:
+                json.dump(self.archive, final)
+        except OSError as e:
+            print("Could not save records:", e)

@@ -41,7 +41,6 @@ class main_dashboard(Frame):
         register_card(content, self.queue).pack(fill="x", padx=16, pady=(16, 0))
         next_patient_card(content, self.queue).pack(fill="x", padx=16, pady=(12, 0))
         queue_card(content, self.queue, lambda: medique.page("full_list")).pack(fill="x", padx=16, pady=(12, 16))
-
         self.bind("<Configure>", self._resize)
 
     # the cards follow the width of the window

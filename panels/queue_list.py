@@ -9,6 +9,7 @@ rows_shown = 5     # how many patients you see at once in the card (scroll with 
 
 # the table columns: (title, width)     <-- ADJUST the numbers to change the width of each column
 columns = (("QUEUING NO", 14), ("PATIENT ID", 20), ("PATIENT NAME", 42), ("AGE", 10), ("PRIORITY", 17))
+columns2 = (("#", 8), ("PATIENT ID", 16), ("PATIENT NAME", 42), ("AGE", 10), ("PRIORITY", 17), ("CONSULTED?", 10))
 
 
 # ---------- the table (blue header that stays on top + rows that scroll) ----------
@@ -18,7 +19,7 @@ columns = (("QUEUING NO", 14), ("PATIENT ID", 20), ("PATIENT NAME", 42), ("AGE",
 #                  (used by the full queuing list screen)
 # header text size: font_heading, 18      row text size: font_body, 12      row height: pady=6
 class QueueTable(Frame):
-    def __init__(self, parent, max_rows=None, show_scrollbar=True, fill_blank=False):
+    def __init__(self, parent, max_rows=None, show_scrollbar=True, fill_blank=False, archive=False):
         super().__init__(parent, bg=border)
         self.max_rows = max_rows
         self.fill_blank = fill_blank
@@ -27,12 +28,17 @@ class QueueTable(Frame):
         self.blank_count = 0    # how many empty rows are drawn at the bottom
         self.row_h = None       # height of one row (measured once)
 
+        if archive:
+            self.create_columns = columns2
+        else:
+            self.create_columns = columns
+
         # ---- header (stays on top) ----
         head = Frame(self, bg=border)
         head.pack(fill="x")
         head_cells = Frame(head, bg=border)
         head_cells.pack(side="left", fill="x", expand=True)
-        for col, (title, weight) in enumerate(columns):
+        for col, (title, weight) in enumerate(self.create_columns):
             head_cells.columnconfigure(col, weight=weight, uniform="cols")
             Label(head_cells, text=title, font=(font_heading, 18), bg=primary, fg=text, pady=4)\
                 .grid(row=0, column=col, sticky="nsew", padx=(0 if col == 0 else 1, 0))
@@ -46,7 +52,7 @@ class QueueTable(Frame):
         self.canvas = Canvas(self.area, bg=cell_bg, highlightthickness=0, bd=0, height=1, yscrollincrement=24)
         self.rows = Frame(self.canvas, bg=border)
         self.window = self.canvas.create_window(0, 0, window=self.rows, anchor="nw")
-        for col, (title, weight) in enumerate(columns):
+        for col, (title, weight) in enumerate(self.create_columns):
             self.rows.columnconfigure(col, weight=weight, uniform="cols")
 
         if show_scrollbar:
@@ -118,7 +124,7 @@ class QueueTable(Frame):
         self.row_widgets = []
         if not self.data:
             empty = Label(self.rows, text="No patients in the queue.", font=(font_body, 12), bg=cell_bg, fg=dark, pady=10)
-            empty.grid(row=0, column=0, columnspan=len(columns), sticky="nsew", pady=(1, 0))
+            empty.grid(row=0, column=0, columnspan=len(self.create_columns), sticky="nsew", pady=(1, 0))
             self.row_widgets.append(empty)
         for r, row in enumerate(self.data):
             for col, value in enumerate(row):
@@ -130,7 +136,7 @@ class QueueTable(Frame):
         self.blank_count = self._blank_needed()
         first = max(len(self.data), 1)
         for r in range(first, first + self.blank_count):
-            for col in range(len(columns)):
+            for col in range(len(self.create_columns)):
                 cell = Label(self.rows, text=" ", font=(font_body, 12), bg=cell_bg, fg=dark, pady=6)
                 cell.grid(row=r, column=col, sticky="nsew", padx=(0 if col == 0 else 1, 0), pady=(1, 0))
                 self.row_widgets.append(cell)

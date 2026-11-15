@@ -71,7 +71,8 @@ class next_patient_card(RoundedBox):
             return
         if confirm_cancel and not messagebox.askyesno("Cancel patient", "Remove " + patient["name"] + " from the queue?"):
             return
-        self.queue.dequeue(patient)
+        patient.update({"consulted": "CANCELLED"})
+        self.queue.dequeue()
         self.show(patient["name"] + " was removed from the queue.")
 
     # ---------- COMPLETE CONSULTATION = done with this patient, the next one comes up ----------
@@ -82,5 +83,6 @@ class next_patient_card(RoundedBox):
             return
         if confirm_complete and not messagebox.askyesno("Complete consultation", "Complete the consultation of " + patient["name"] + "?"):
             return
-        self.queue.dequeue(patient)
+        patient.update({"consulted": "YES"})
+        self.queue.dequeue()
         self.show("Consultation of " + patient["name"] + " completed.")
