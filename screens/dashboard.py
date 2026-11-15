@@ -59,7 +59,7 @@ class main_dashboard(Frame):
         if self.content_height <= self.canvas.winfo_height():
             self.canvas.yview_moveto(0)
 
-    # mouse wheel scrolls the page (but a long queuing list table scrolls itself first)
+    # mouse wheel scrolls the page (but a long queuing list table scrolls itself first)/
     def _wheel(self, event):
         try:
             under = self.winfo_containing(event.x_root, event.y_root)
