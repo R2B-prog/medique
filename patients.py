@@ -92,14 +92,9 @@ class PatientQueue:
 
     # saves current queue of patients into patient_list.json file in the data folder
     def savefile(self):
-        temp = self.patients.copy()
-        patients = []
-        while temp:
-            pid = heapq.heappop(temp)[2]
-            patients.append(pid)
         try:
             with open("data/patient_list.json", "w") as final:
-                json.dump([self.ticket,self.counters,patients], final, indent=4)
+                json.dump([self.ticket,self.counters,self.patients], final, indent=4)
         except OSError as e:
             print("Could not save records:", e)
 
