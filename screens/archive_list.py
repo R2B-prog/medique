@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import filedialog, messagebox
 
 from panels.header import header
 from panels.queue_list import QueueTable
@@ -24,6 +25,9 @@ class archive_list(Frame):
         top.pack(fill="x", padx=16, pady=(12, 8))
         card_button(top, "GO BACK", 110, lambda: medique.page("full_list"), bg=light_blue).pack(side="left")   # 110 = width of the button
 
+        # ---- DOWNLOAD CSV button (right side) ----
+        card_button(top, "Download CSV", 150, self.download_csv, bg=light_blue).pack(side="right")
+
         # ---- card with the title + the table (the card fills all the space left in the window) ----
         card = FillBox(self, card_bg, light_blue, radius=14, outline=card_outline, pad=6)
         card.pack(fill="both", expand=True, padx=16, pady=(0, 16))
@@ -39,3 +43,17 @@ class archive_list(Frame):
 
     def refresh(self):
         self.table.set_rows(self.queue.archive_rows())
+
+    # asks where to save, then writes the archive list as a .csv file
+    def download_csv(self):
+        path = filedialog.asksaveasfilename(title="Save archive list", defaultextension=".csv",
+                                            initialfile="patient_archive.csv",
+                                            filetypes=[("CSV files", "*.csv")])
+        if not path:
+            return   # cancelled
+        try:
+            self.queue.export_archive_csv(path)
+        except OSError as e:
+            messagebox.showerror("Medique!", "Could not save the file:\n%s" % e)
+        else:
+            messagebox.showinfo("Medique!", "Archive list saved to:\n%s" % path)

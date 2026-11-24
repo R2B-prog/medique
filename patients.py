@@ -1,6 +1,7 @@
 # The queue of patients. Shared by the Register, Next Patient and Queuing List cards.
 # (Not named "queue.py" because Python already has a module called queue.)
 import json
+import csv
 import heapq
 
 PRIORITIES = ["regular", "priority", "emergency"]
@@ -108,3 +109,10 @@ class PatientQueue:
                 json.dump(self.archive, final, indent=4)
         except OSError as e:
             print("Could not save records:", e)
+
+    # writes the archive list into a csv file (same columns as the Archive List table)
+    def export_archive_csv(self, path):
+        with open(path, "w", newline="", encoding="utf-8-sig") as f:   # utf-8-sig so Excel reads it properly
+            writer = csv.writer(f)
+            writer.writerow(["Queuing No", "Patient ID", "Name", "Age", "Priority", "Consulted"])
+            writer.writerows(self.archive_rows())
